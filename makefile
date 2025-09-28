@@ -9,6 +9,7 @@ init:
 	go mod init novm
 	go get github.com/mattn/go-sqlite3
 	go get golang.org/x/crypto/bcrypt
+	go get github.com/yuin/goldmark
 
 run:
 	go run $(src)

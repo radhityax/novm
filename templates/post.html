@@ -1,13 +1,23 @@
 <html>
 <head>
-	<link rel="stylesheet" type="text/css" href="/static/style.css">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>{{.Title}}</title>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
 </head>
 <body>
-	<h1>{{.Title}}</h1>
-	<div>{{.HTML | safeHTML}}</div>
-	<a href="/">Back</a>
+    <div class="post">
+        <header>
+            <h1>{{.Title}}</h1>
+        </header>
+        <main>
+            <div>{{.HTML | safeHTML}}</div>
+        </main>
+        <footer>
+            <nav>
+                <a href="/">Back</a>
+            </nav>
+        </footer>
+    </div>
 </body>
 </html>
 

@@ -211,10 +211,10 @@ func IndexPage(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var p Post
 		rows.Scan(&p.ID, &p.Title, &p.Slug, &p.Content)
-		var sb strings.Builder
-		if err := goldmark.Convert([]byte(p.Content), &sb); err == nil {
-			p.HTML = sb.String()
-		}
+		//var sb strings.Builder
+		//if err := goldmark.Convert([]byte(p.Content), &sb); err == nil {
+	//		p.HTML = sb.String()
+	//	}
 		posts = append(posts, p)
 	}
 	renderTemplate(w, "index.html", posts)
@@ -330,8 +330,7 @@ func DeletePostPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func renderTemplate(w http.ResponseWriter, filename string, data interface{}) {
-	tmpl, err := template.New(filename).Funcs(tmplFuncs).ParseFiles(`
-	templates/` + filename)
+	tmpl, err := template.New(filename).Funcs(tmplFuncs).ParseFiles(`templates/` + filename)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
