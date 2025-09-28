@@ -1,0 +1,21 @@
+<html>
+<head>
+    <title>My Blog</title>
+</head>
+<body>
+    <h1>Posts</h1>
+    <a href="/dashboard">Dashboard</a>
+    <ul>
+        {{range .}}
+		<li>
+			<a href="/post/{{.Slug}}">{{.Title}}</a>
+
+			<div>{{.HTML | safeHTML}}</div>
+		</li>
+		{{else}}
+		<li>No posts yet</li>
+		{{end}}
+	</ul>
+</body>
+</html>
+

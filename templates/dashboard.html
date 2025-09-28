@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Dashboard</h1>
+    <a href="/new">+ New Post</a>
+    <ul>
+    {{range .}}
+        <li>
+            <a href="/post/{{.Slug}}">{{.Title}}</a> |
+            <a href="/edit/{{.Slug}}">Edit</a> |
+            <a href="/delete/{{.Slug}}">Delete</a>
+        </li>
+    {{end}}
+    </ul>
+</body>
+</html>
+
