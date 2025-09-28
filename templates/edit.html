@@ -1,19 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Edit Post</title>
+	<link rel="stylesheet" type="text/css" href="/static/style.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Edit Post</title>
 </head>
 <body>
-    <h1>Edit Post</h1>
-    <form method="POST">
-        <label>Title:</label><br>
-        <input type="text" name="title" value="{{.Title}}"><br><br>
+	<h1>Edit Post</h1>
+	<form method="POST">
+		<label>Title:</label><br>
+		<input type="text" name="title" value="{{.Title}}"><br><br>
 
-        <label>Content (Markdown):</label><br>
-        <textarea name="content" rows="10" cols="50">{{.Content}}</textarea><br><br>
+		<label>Content (Markdown):</label><br>
+		<textarea name="content" rows="10" cols="50">{{.Content}}</textarea><br><br>
 
-        <button type="submit">Save</button>
-    </form>
+		<button type="submit">Save</button>
+	</form>
 </body>
 </html>
 

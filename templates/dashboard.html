@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Dashboard</title>
+	<link rel="stylesheet" type="text/css" href="/static/style.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Dashboard</title>
 </head>
 <body>
-    <h1>Dashboard</h1>
-    <a href="/new">+ New Post</a>
-    <ul>
-    {{range .}}
-        <li>
-            <a href="/post/{{.Slug}}">{{.Title}}</a> |
-            <a href="/edit/{{.Slug}}">Edit</a> |
-            <a href="/delete/{{.Slug}}">Delete</a>
-        </li>
-    {{end}}
-    </ul>
+	<h1>Dashboard</h1>
+	<a href="/new">+ New Post</a>
+	<ul>
+		{{range .}}
+		<li>
+			<a href="/post/{{.Slug}}">{{.Title}}</a> |
+			<a href="/edit/{{.Slug}}">Edit</a> |
+			<a href="/delete/{{.Slug}}">Delete</a>
+		</li>
+		{{end}}
+	</ul>
 </body>
 </html>
 
