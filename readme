@@ -1,2 +1,28 @@
 novm
 ====
+
+another blog system written in golang
+
+usage
+====
+
+setup
+
+```sh
+$ make init
+$ make install
+```
+
+run
+```sh
+$ ./novm r
+```
+
+```sh
+$ ./novm h
+```
+
+third libraries
+- goldmark
+- go-sqlite
+- bcrypt

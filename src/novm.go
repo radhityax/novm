@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
+	"os"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/yuin/goldmark"
 	"golang.org/x/crypto/bcrypt"
@@ -67,22 +67,33 @@ func main() {
 		log.Fatal(err)
 	}
 
-	http.HandleFunc("/", IndexPage)
-	http.HandleFunc("/register", SignupPage)
-	http.HandleFunc("/login", LoginPage)
-	http.HandleFunc("/logout", LogoutHandler)
-	http.HandleFunc("/dashboard", AuthMiddleware(DashboardPage))
-	http.HandleFunc("/post/", PostPage)
-	http.HandleFunc("/new", AuthMiddleware(NewPostPage))
-	http.HandleFunc("/edit/", AuthMiddleware(EditPostPage))
-	http.HandleFunc("/delete/", AuthMiddleware(DeletePostPage))
+	if len(os.Args) == 1 {
+		fmt.Println("you need another option")
+		return
+	} else if os.Args[1] == "r" {
+		http.HandleFunc("/", IndexPage)
+		http.HandleFunc("/register", SignupPage)
+		http.HandleFunc("/login", LoginPage)
+		http.HandleFunc("/logout", LogoutHandler)
+		http.HandleFunc("/dashboard", AuthMiddleware(DashboardPage))
+		http.HandleFunc("/post/", PostPage)
+		http.HandleFunc("/new", AuthMiddleware(NewPostPage))
+		http.HandleFunc("/edit/", AuthMiddleware(EditPostPage))
+		http.HandleFunc("/delete/", AuthMiddleware(DeletePostPage))
 
-	http.Handle("/static/", http.StripPrefix("/static/", 
-	http.FileServer(http.Dir("static"))))
+		http.Handle("/static/", http.StripPrefix("/static/", 
+		http.FileServer(http.Dir("static"))))
 
-	fmt.Println("novm started at http://localhost:1112")
-	http.ListenAndServe(":1112", nil)
-}
+		fmt.Println("novm started at http://localhost:1112")
+		http.ListenAndServe(":1112", nil)
+		return
+	} else if os.Args[1] == "h" {
+		fmt.Println("h - help")
+		fmt.Println("r - run the blog")
+		fmt.Println("v - about")
+		return
+	}
+	}
 
 func SignupPage(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
@@ -213,8 +224,8 @@ func IndexPage(w http.ResponseWriter, r *http.Request) {
 		rows.Scan(&p.ID, &p.Title, &p.Slug, &p.Content)
 		//var sb strings.Builder
 		//if err := goldmark.Convert([]byte(p.Content), &sb); err == nil {
-	//		p.HTML = sb.String()
-	//	}
+		//		p.HTML = sb.String()
+		//	}
 		posts = append(posts, p)
 	}
 	renderTemplate(w, "index.html", posts)
