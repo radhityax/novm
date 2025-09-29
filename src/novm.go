@@ -355,6 +355,12 @@ func renderTemplate(w http.ResponseWriter, filename string, data interface{}) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	head, err := template.ParseFiles(`templates/head.html`)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	
 	header, err := template.ParseFiles(`templates/header.html`)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -365,7 +371,8 @@ func renderTemplate(w http.ResponseWriter, filename string, data interface{}) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	header.Execute(w, data)
+	head.Execute(w, nil)
+	header.Execute(w, nil)
 	tmpl.Execute(w, data)
-	footer.Execute(w, data)
+	footer.Execute(w, nil)
 }
