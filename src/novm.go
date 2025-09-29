@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 	"os"
+
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/yuin/goldmark"
 	"golang.org/x/crypto/bcrypt"
@@ -63,6 +64,7 @@ func main() {
 		slug TEXT UNIQUE,
 		content TEXT
 	)`)
+	
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -70,7 +72,7 @@ func main() {
 	if len(os.Args) == 1 {
 		fmt.Println("you need another option")
 		return
-	} else if os.Args[1] == "r" {
+	} else if os.Args[1] == "-r" {
 		http.HandleFunc("/", IndexPage)
 		http.HandleFunc("/register", SignupPage)
 		http.HandleFunc("/login", LoginPage)
@@ -87,13 +89,20 @@ func main() {
 		fmt.Println("novm started at http://localhost:1112")
 		http.ListenAndServe(":1112", nil)
 		return
-	} else if os.Args[1] == "h" {
+	} else if os.Args[1] == "-h" {
 		fmt.Println("h - help")
 		fmt.Println("r - run the blog")
 		fmt.Println("v - about")
 		return
+	} else if os.Args[1] == "-v" {
+		fmt.Println("novm - wannabe blog system written in golang")
+		fmt.Println("github.com/radhityax/novm")
+		return
+	} else {
+		fmt.Println("wrong option, use -h flag")
+		return
 	}
-	}
+}
 
 func SignupPage(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
@@ -346,5 +355,17 @@ func renderTemplate(w http.ResponseWriter, filename string, data interface{}) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	header, err := template.ParseFiles(`templates/header.html`)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	footer, err := template.ParseFiles(`templates/footer.html`)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	header.Execute(w, data)
 	tmpl.Execute(w, data)
+	footer.Execute(w, data)
 }
