@@ -1,9 +1,9 @@
 src = src/novm.go
 target = novm
 db = novm.db
-
+flags = -a -gcflags=all="-l -B" -ldflags="-s -w" -trimpath
 build:
-	go build $(src)
+	go build $(flags) $(src)
 
 init:
 	go mod init novm
