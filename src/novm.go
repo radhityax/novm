@@ -125,7 +125,7 @@ func SignupPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 		return
 	}
-	renderTemplate(w, "signup.html", nil)
+	renderTemplate(w, r, "signup.html", nil)
 }
 
 func LoginPage(w http.ResponseWriter, r *http.Request) {
@@ -148,7 +148,7 @@ func LoginPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 		return
 	}
-	renderTemplate(w, "login.html", nil)
+	renderTemplate(w, r, "login.html", nil)
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -216,7 +216,7 @@ func DashboardPage(w http.ResponseWriter, r *http.Request) {
 		rows.Scan(&p.ID, &p.Title, &p.Slug, &p.Content)
 		posts = append(posts, p)
 	}
-	renderTemplate(w, "dashboard.html", posts)
+	renderTemplate(w, r, "dashboard.html", posts)
 }
 
 
@@ -237,7 +237,7 @@ func IndexPage(w http.ResponseWriter, r *http.Request) {
 		//	}
 		posts = append(posts, p)
 	}
-	renderTemplate(w, "index.html", posts)
+	renderTemplate(w, r, "index.html", posts)
 }
 
 
@@ -260,7 +260,7 @@ func PostPage(w http.ResponseWriter, r *http.Request) {
 	if err := goldmark.Convert([]byte(p.Content), &sb); err == nil {
 		p.HTML = sb.String()
 	}
-	renderTemplate(w, "post.html", p)
+	renderTemplate(w, r, "post.html", p)
 }
 
 
@@ -280,7 +280,7 @@ func NewPostPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	renderTemplate(w, "newpost.html", nil)
+	renderTemplate(w, r, "newpost.html", nil)
 }
 
 func generateSessionID() string {
@@ -330,7 +330,7 @@ func EditPostPage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	renderTemplate(w, "edit.html", p)
+	renderTemplate(w, r, "edit.html", p)
 }
 
 func DeletePostPage(w http.ResponseWriter, r *http.Request) {
@@ -349,7 +349,7 @@ func DeletePostPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func renderTemplate(w http.ResponseWriter, filename string, data interface{}) {
+func renderTemplate(w http.ResponseWriter, r *http.Request, filename string, data interface{}) {
 	tmpl, err := template.New(filename).Funcs(tmplFuncs).ParseFiles(`templates/` + filename)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -360,19 +360,35 @@ func renderTemplate(w http.ResponseWriter, filename string, data interface{}) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
+
 	header, err := template.ParseFiles(`templates/header.html`)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	logged, err := template.ParseFiles("templates/logged.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	footer, err := template.ParseFiles(`templates/footer.html`)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	head.Execute(w, nil)
 	header.Execute(w, nil)
+	
+	if _, err := r.Cookie("session"); err == nil {
+		if err := logged.Execute(w, nil); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
 	tmpl.Execute(w, data)
 	footer.Execute(w, nil)
 }
