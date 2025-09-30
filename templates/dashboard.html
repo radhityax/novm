@@ -5,7 +5,7 @@
 		<li>
 			<a href="/post/{{.Slug}}">{{.Title}}</a> |
 			<a href="/edit/{{.Slug}}">Edit</a> |
-			<a href="/delete/{{.Slug}}">Delete</a>
+			<a href="/delete/{{.Slug}}" onclick="return confirm('y or n');">Delete</a>
 		</li>
 		{{end}}
 	</ul>

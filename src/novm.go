@@ -379,16 +379,28 @@ func renderTemplate(w http.ResponseWriter, r *http.Request, filename string, dat
 		return
 	}
 
-	head.Execute(w, nil)
-	header.Execute(w, nil)
+	if err := head.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	
 	if _, err := r.Cookie("session"); err == nil {
 		if err := logged.Execute(w, nil); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+	} else {
+		if err := header.Execute(w, data); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
-
-	tmpl.Execute(w, data)
-	footer.Execute(w, nil)
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err := footer.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

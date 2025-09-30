@@ -8,21 +8,21 @@ usage
 
 setup
 
-```sh
 $ make init
 $ make install
-```
 
 run
-```sh
-$ ./novm r
-```
 
-```sh
-$ ./novm h
-```
+$ ./novm -r
+
+help
+
+$ ./novm -h
+
 
 third libraries
-- goldmark
-- go-sqlite
-- bcrypt
+===============
+
+- https://github.com/yuin/goldmark
+- https://github.com/mattn/go-sqlite3
+- https://pkg.go.dev/golang.org/x/crypto/bcrypt
