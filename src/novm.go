@@ -23,6 +23,12 @@ var tmplFuncs = template.FuncMap{
 	"safeHTML": func(s string) template.HTML {
 		return template.HTML(s)
 	},
+	"add": func(a, b int) int {
+		return a + b
+	},
+	"sub": func(a, b int) int {
+		return a - b
+	},
 }
 
 type Post struct {
@@ -221,7 +227,21 @@ func DashboardPage(w http.ResponseWriter, r *http.Request) {
 
 
 func IndexPage(w http.ResponseWriter, r *http.Request) {
-	rows, err := db.Query(`SELECT id, title, slug, content FROM posts ORDER BY id DESC`)
+
+	pageStr := r.URL.Query().Get("page")
+	page := 1
+	if pageStr != "" {
+		fmt.Sscanf(pageStr, "%d", &page)
+	}
+	if page < 1 {
+		page = 1
+	}
+
+	limit := 3
+	offset := (page - 1) * limit
+
+	rows, err := db.Query(`SELECT id, title, slug, content FROM posts ORDER BY id DESC LIMIT
+	? OFFSET ?`, limit, offset)
 	if err != nil {
 		http.Error(w, "db error", 500)
 		return
@@ -237,7 +257,15 @@ func IndexPage(w http.ResponseWriter, r *http.Request) {
 		//	}
 		posts = append(posts, p)
 	}
-	renderTemplate(w, r, "index.html", posts)
+
+	data := struct {
+		Posts []Post
+		Page int
+	}{
+		Posts: posts,
+		Page: page,
+	}
+	renderTemplate(w, r, "index.html", data)
 }
 
 

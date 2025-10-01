@@ -1,15 +1,26 @@
 <body>
-	<ul>
-		{{range .}}
-		<li>
-			<a href="/post/{{.Slug}}">{{.Title}}</a>
+    <ul>
+        {{range .Posts}}
+        <li>
+            <a href="/post/{{.Slug}}">{{.Title}}</a>
+            <div>{{.HTML | safeHTML}}</div>
+        </li>
+        {{else}}
+        <li>No posts yet</li>
+        {{end}}
+    </ul>
 
-			<div>{{.HTML | safeHTML}}</div>
-		</li>
-		{{else}}
-		<li>No posts yet</li>
-		{{end}}
-	</ul>
+    <div class="pagination">
+        {{if gt .Page 1}}
+            <a href="/?page={{sub .Page 1}}">Prev</a>
+        {{end}}
+
+        <span>{{.Page}}</span>
+
+        {{if eq (len .Posts) 3}}
+            <a href="/?page={{add .Page 1}}">Next</a>
+        {{end}}
+    </div>
 </body>
 </html>
 
