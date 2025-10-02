@@ -19,18 +19,6 @@ import (
 
 var db *sql.DB
 
-var tmplFuncs = template.FuncMap{
-	"safeHTML": func(s string) template.HTML {
-		return template.HTML(s)
-	},
-	"add": func(a, b int) int {
-		return a + b
-	},
-	"sub": func(a, b int) int {
-		return a - b
-	},
-}
-
 type Post struct {
 	ID      int
 	Title   string
@@ -103,6 +91,9 @@ func main() {
 	} else if os.Args[1] == "-v" {
 		fmt.Println("novm - wannabe blog system written in golang")
 		fmt.Println("github.com/radhityax/novm")
+		return
+	} else if os.Args[1] == "-c" {
+		CreateAccount()
 		return
 	} else {
 		fmt.Println("wrong option, use -h flag")
