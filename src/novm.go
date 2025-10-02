@@ -81,6 +81,7 @@ func main() {
 		http.ListenAndServe(":1112", nil)
 		return
 	} else if os.Args[1] == "-h" {
+		fmt.Println("c - create account")
 		fmt.Println("h - help")
 		fmt.Println("r - run the blog")
 		fmt.Println("v - about")
@@ -93,7 +94,7 @@ func main() {
 		CreateAccount()
 		return
 	} else {
-		fmt.Println("wrong option, use -h flag")
+		fmt.Println("wrong option. see -h flag for help")
 		return
 	}
 }
