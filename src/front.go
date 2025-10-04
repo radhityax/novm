@@ -91,22 +91,46 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 func DashboardPage(w http.ResponseWriter, r *http.Request) {
 	author := getusername(w, r)
 
+	pageStr := r.URL.Query().Get("page")
+	page := 1
+	if pageStr != "" {
+		fmt.Sscanf(pageStr, "%d", &page)
+	}
+	if page < 1 {
+		page = 1
+	}
+	limit := 5
+	offset := (page - 1) * limit
+
 	rows, err := db.Query(`SELECT id, date, author, title, slug, content FROM 
-	posts WHERE author=? ORDER BY id DESC`, author)
+	posts WHERE author=? ORDER BY id DESC LIMIT ? OFFSET ?`, author, limit, 
+	offset)
+
 	if err != nil {
 		http.Error(w, "db error", 500)
 		return
 	}
 
-	// username, err := db.Exec
 	defer rows.Close()
 	var posts []Post
 	for rows.Next() {
 		var p Post
 		rows.Scan(&p.ID, &p.Date, &p.Author, &p.Title, &p.Slug, &p.Content)
+		var sb strings.Builder
+		if err := goldmark.Convert([]byte(p.Date), &sb); err == nil {
+			p.HTML = sb.String()
+		}
+
 		posts = append(posts, p)
 	}
-	renderTemplate(w, r, "dashboard.html", posts)
+	data := struct {
+		Posts []Post
+		Page int
+	}{
+		Posts: posts,
+		Page: page,
+	}
+	renderTemplate(w, r, "dashboard.html", data)
 }
 
 func IndexPage(w http.ResponseWriter, r *http.Request) {
@@ -120,11 +144,12 @@ func IndexPage(w http.ResponseWriter, r *http.Request) {
 		page = 1
 	}
 
-	limit := 3
+	limit := 5
 	offset := (page - 1) * limit
 
-	rows, err := db.Query(`SELECT id, date, author, title, slug, content FROM posts ORDER BY id DESC LIMIT
-	? OFFSET ?`, limit, offset)
+	rows, err := db.Query(`SELECT id, date, author, title, slug, content FROM 
+	posts ORDER BY id DESC LIMIT ? OFFSET ?`, limit, offset)
+
 	if err != nil {
 		http.Error(w, "db error", 500)
 		return
@@ -134,10 +159,10 @@ func IndexPage(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var p Post
 		rows.Scan(&p.ID, &p.Date, &p.Author, &p.Title, &p.Slug, &p.Content)
-		//var sb strings.Builder
-		//if err := goldmark.Convert([]byte(p.Content), &sb); err == nil {
-		//		p.HTML = sb.String()
-		//	}
+		var sb strings.Builder
+		if err := goldmark.Convert([]byte(p.Date), &sb); err == nil {
+			p.HTML = sb.String()
+		}
 		posts = append(posts, p)
 	}
 
@@ -181,28 +206,28 @@ func NewPostPage(w http.ResponseWriter, r *http.Request) {
 		date := time.Now().Format(time.RFC3339)
 		if lol, err := r.Cookie("session"); err == nil {
 
-		var userID int
-		var userName string
-		err := db.QueryRow("SELECT user_id FROM sessions WHERE id =?",
-		lol.Value).Scan(&userID)
-		if err != nil {
+			var userID int
+			var userName string
+			err := db.QueryRow("SELECT user_id FROM sessions WHERE id =?",
+			lol.Value).Scan(&userID)
+			if err != nil {
+				return
+			}
+
+			err = db.QueryRow("SELECT username FROM users where id=?",
+			userID).Scan(&userName)
+
+			_, err = db.Exec(`INSERT INTO posts(date, author, title, slug, content) 
+			VALUES(?,?,?,?,?)`, date, userName, title, slug, content)
+
+			if err != nil {
+				http.Error(w, "db insert error", 500)
+				return
+			}
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
-
-		err = db.QueryRow("SELECT username FROM users where id=?",
-		userID).Scan(&userName)
-
-		_, err = db.Exec(`INSERT INTO posts(date, author, title, slug, content) 
-		VALUES(?,?,?,?,?)`, date, userName, title, slug, content)
-
-		if err != nil {
-			http.Error(w, "db insert error", 500)
-			return
-		}
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
 	}
-}
 	renderTemplate(w, r, "newpost.html", nil)
 }
 

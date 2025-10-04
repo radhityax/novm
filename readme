@@ -3,6 +3,13 @@ novm
 
 another blog system written in golang
 
+configuration
+=============
+
+there is no configuration file, and you have to hack the code because i'm stuck 
+on how to add the configuration feature. but don't worry, the program source 
+code is kind of easy to understand.
+
 usage
 ====
 
@@ -18,7 +25,6 @@ $ ./novm -r
 help
 
 $ ./novm -h
-
 
 third libraries
 ===============

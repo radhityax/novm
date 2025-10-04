@@ -14,6 +14,12 @@ import (
 
 )
 
+// i'm not sure about implementing the configure file,
+// so i had to do that in the source code directly.
+
+// register in the browser: 0 for no, 1 for yes
+var register_browser_mode int = 0
+
 var db *sql.DB
 
 type Post struct {
@@ -81,7 +87,11 @@ func main() {
 				if _, err := r.Cookie("session"); err == nil {
 					http.Redirect(w, r, "/dashboard", 302)
 				} else {
+					if (register_browser_mode > 0) {
 					SignupPage(w, r)
+				} else {
+					http.Redirect(w, r, "/", 302)
+				}
 				}})
 
 				http.HandleFunc("/logout", LogoutHandler)
@@ -95,7 +105,11 @@ func main() {
 				http.FileServer(http.Dir("static"))))
 
 				fmt.Println("novm started at http://localhost:1112")
-				http.ListenAndServe(":1112", nil)
+				err := http.ListenAndServe(":1112", nil)
+				if err != nil {
+					log.Fatal(err)
+					return
+				}
 				return
 			} else if os.Args[1] == "-h" {
 				fmt.Println("c - create account")
@@ -141,7 +155,7 @@ func main() {
 				cookie, err := r.Cookie("session")
 				if err != nil || cookie.Value == "" {
 					http.Redirect(w, r, "/login", http.StatusSeeOther)
-					log.Println("kayaknya ini errornya")
+					log.Fatal(err)
 					return
 				}
 				var userID int
@@ -177,7 +191,6 @@ func getusername(w http.ResponseWriter, r *http.Request) (string) {
 
 		err = db.QueryRow("SELECT username FROM users WHERE id=?",
 		id).Scan(&user)
-		fmt.Println(user)
 		return user
 	} 
 	return ""
