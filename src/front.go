@@ -89,7 +89,10 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DashboardPage(w http.ResponseWriter, r *http.Request) {
-	rows, err := db.Query(`SELECT id, title, slug, content FROM posts ORDER BY id DESC`)
+	author := getusername(w, r)
+
+	rows, err := db.Query(`SELECT id, date, author, title, slug, content FROM 
+	posts WHERE author=? ORDER BY id DESC`, author)
 	if err != nil {
 		http.Error(w, "db error", 500)
 		return
@@ -100,7 +103,7 @@ func DashboardPage(w http.ResponseWriter, r *http.Request) {
 	var posts []Post
 	for rows.Next() {
 		var p Post
-		rows.Scan(&p.ID, &p.Title, &p.Slug, &p.Content)
+		rows.Scan(&p.ID, &p.Date, &p.Author, &p.Title, &p.Slug, &p.Content)
 		posts = append(posts, p)
 	}
 	renderTemplate(w, r, "dashboard.html", posts)
@@ -120,7 +123,7 @@ func IndexPage(w http.ResponseWriter, r *http.Request) {
 	limit := 3
 	offset := (page - 1) * limit
 
-	rows, err := db.Query(`SELECT id, title, slug, content FROM posts ORDER BY id DESC LIMIT
+	rows, err := db.Query(`SELECT id, date, author, title, slug, content FROM posts ORDER BY id DESC LIMIT
 	? OFFSET ?`, limit, offset)
 	if err != nil {
 		http.Error(w, "db error", 500)
@@ -130,7 +133,7 @@ func IndexPage(w http.ResponseWriter, r *http.Request) {
 	var posts []Post
 	for rows.Next() {
 		var p Post
-		rows.Scan(&p.ID, &p.Title, &p.Slug, &p.Content)
+		rows.Scan(&p.ID, &p.Date, &p.Author, &p.Title, &p.Slug, &p.Content)
 		//var sb strings.Builder
 		//if err := goldmark.Convert([]byte(p.Content), &sb); err == nil {
 		//		p.HTML = sb.String()
@@ -156,8 +159,8 @@ func PostPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var p Post
-	err := db.QueryRow(`SELECT id, title, content FROM posts WHERE slug=?`, slug).
-	Scan(&p.ID, &p.Title, &p.Content)
+	err := db.QueryRow(`SELECT id, date, author, title, content FROM posts WHERE slug=?`, slug).
+	Scan(&p.ID, &p.Date, &p.Author, &p.Title, &p.Content)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -175,9 +178,22 @@ func NewPostPage(w http.ResponseWriter, r *http.Request) {
 		title := r.FormValue("title")
 		content := r.FormValue("content")
 		slug := slugify(title)
+		date := time.Now().Format(time.RFC3339)
+		if lol, err := r.Cookie("session"); err == nil {
 
-		_, err := db.Exec(`INSERT INTO posts(title, slug, content) VALUES(?,?,?)`,
-		title, slug, content)
+		var userID int
+		var userName string
+		err := db.QueryRow("SELECT user_id FROM sessions WHERE id =?",
+		lol.Value).Scan(&userID)
+		if err != nil {
+			return
+		}
+
+		err = db.QueryRow("SELECT username FROM users where id=?",
+		userID).Scan(&userName)
+
+		_, err = db.Exec(`INSERT INTO posts(date, author, title, slug, content) 
+		VALUES(?,?,?,?,?)`, date, userName, title, slug, content)
 
 		if err != nil {
 			http.Error(w, "db insert error", 500)
@@ -186,21 +202,30 @@ func NewPostPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
+}
 	renderTemplate(w, r, "newpost.html", nil)
 }
 
 func EditPostPage(w http.ResponseWriter, r *http.Request) {
+	username := getusername(w, r)
+	var p Post
+
 	slug := strings.TrimPrefix(r.URL.Path, "/edit/")
 	if slug == "" {
 		http.NotFound(w, r)
 		return
 	}
+	err := db.QueryRow(`SELECT author FROM posts 
+	WHERE slug=?`,  slug).Scan(&p.Author)
 
+	if err != nil || p.Author != username {
+		http.Error(w, ":(", http.StatusForbidden)
+		return
+	}
 	if r.Method == http.MethodPost {
 		title := r.FormValue("title")
 		content := r.FormValue("content")
 		newSlug := slugify(title)
-
 		_, err := db.Exec(`UPDATE posts SET title=?, slug=?, content=? WHERE slug=?`,
 		title, newSlug, content, slug)
 		if err != nil {
@@ -211,9 +236,8 @@ func EditPostPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var p Post
-	err := db.QueryRow(`SELECT id, title, slug, content FROM posts WHERE slug=?`, slug).
-	Scan(&p.ID, &p.Title, &p.Slug, &p.Content)
+	err = db.QueryRow(`SELECT id, date, author, title, slug, content FROM posts WHERE slug=?`, slug).
+	Scan(&p.ID, &p.Date, &p.Author, &p.Title, &p.Slug, &p.Content)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -222,20 +246,29 @@ func EditPostPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeletePostPage(w http.ResponseWriter, r *http.Request) {
+	username := getusername(w, r)
 	slug := strings.TrimPrefix(r.URL.Path, "/delete/")
 	if slug == "" {
 		http.NotFound(w, r)
 		return
 	}
 
-	_, err := db.Exec(`DELETE FROM posts WHERE slug=?`, slug)
+	var author string
+	err := db.QueryRow(`SELECT author FROM posts WHERE slug=?`, slug).Scan(&author)
+	if err != nil || author != username {
+		http.Error(w, ":(", http.StatusForbidden)
+		return
+	}
+
+	_, err = db.Exec(`DELETE FROM posts WHERE slug=?`, slug)
 	if err != nil {
-		http.Error(w, "db delete error", 500)
+		http.Error(w, "db delete error", http.StatusInternalServerError)
 		return
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
+
 
 func renderTemplate(w http.ResponseWriter, r *http.Request, filename string, data interface{}) {
 	tmpl, err := template.New(filename).Funcs(tmplFuncs).ParseFiles(`templates/` + filename)
@@ -271,22 +304,11 @@ func renderTemplate(w http.ResponseWriter, r *http.Request, filename string, dat
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
-	if lol, err := r.Cookie("session"); err == nil {
-		var userID int
-		var userName string
-		err := db.QueryRow("SELECT user_id FROM sessions WHERE id=?", 
-		lol.Value).Scan(&userID)
 
-		if err != nil {
-			return
-		}
-
-		err = db.QueryRow("SELECT username FROM users WHERE id=?", 
-		userID).Scan(&userName)
-
+	if _, err := r.Cookie("session"); err == nil {
+		username := getusername(w, r)
 		data := map[string]interface{}{
-			"Username": userName,
+			"Username": username,
 		}
 		if err := logged.Execute(w, data); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
