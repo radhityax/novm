@@ -155,8 +155,6 @@ func main() {
 				cookie, err := r.Cookie("session")
 				if err != nil || cookie.Value == "" {
 					http.Redirect(w, r, "/login", http.StatusSeeOther)
-					log.Fatal(err)
-					return
 				}
 				var userID int
 				var expiry time.Time
