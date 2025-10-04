@@ -95,7 +95,7 @@ func DashboardPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	username, err := db.Exec
+	// username, err := db.Exec
 	defer rows.Close()
 	var posts []Post
 	for rows.Next() {
@@ -272,8 +272,23 @@ func renderTemplate(w http.ResponseWriter, r *http.Request, filename string, dat
 		return
 	}
 	
-	if _, err := r.Cookie("session"); err == nil {
-		if err := logged.Execute(w, nil); err != nil {
+	if lol, err := r.Cookie("session"); err == nil {
+		var userID int
+		var userName string
+		err := db.QueryRow("SELECT user_id FROM sessions WHERE id=?", 
+		lol.Value).Scan(&userID)
+
+		if err != nil {
+			return
+		}
+
+		err = db.QueryRow("SELECT username FROM users WHERE id=?", 
+		userID).Scan(&userName)
+
+		data := map[string]interface{}{
+			"Username": userName,
+		}
+		if err := logged.Execute(w, data); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
