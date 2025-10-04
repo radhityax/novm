@@ -94,6 +94,8 @@ func DashboardPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "db error", 500)
 		return
 	}
+
+	username, err := db.Exec
 	defer rows.Close()
 	var posts []Post
 	for rows.Next() {
